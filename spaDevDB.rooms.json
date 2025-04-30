@@ -1,0 +1,27 @@
+[{
+  "_id": {
+    "$oid": "68099867a857d16c4db5f899"
+  },
+  "name": "スタンダード",
+  "description": "10畳の洋室(2部屋)です。\n定員2名 \nダブルベット、空気浄機付。",
+  "price": 10000,
+  "image": "http://localhost:5000/images/reserved1.jpg"
+},
+{
+  "_id": {
+    "$oid": "68099867a857d16c4db5f89a"
+  },
+  "name": "ファミリー",
+  "description": "14畳の洋室です。\n定員2名 \nダブルベット、空気浄機付。",
+  "price": 11000,
+  "image": "http://localhost:5000/images/reserved2.jpg"
+},
+{
+  "_id": {
+    "$oid": "68099867a857d16c4db5f89b"
+  },
+  "name": "個室",
+  "description": "6畳の洋室です。\n定員1名 \nシングルベット、空気浄機付。",
+  "price": 12000,
+  "image": "http://localhost:5000/images/reserved3.jpg"
+}]
