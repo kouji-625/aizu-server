@@ -48,7 +48,10 @@ app.get('/api/rooms', async (req, res) => {
 });
 
 connectToDB().then(() => {
-  app.post(
+  app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to Aizu Inn Server!' });
+  });
+    app.post(
     '/api/reservations',
     [
       body('userId').optional().isString().withMessage('ユーザーIDは文字列で入力してください'),
