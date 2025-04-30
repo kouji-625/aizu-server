@@ -10,7 +10,11 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://client-3ke0ngmxp-kouji-s-projects-352e3ffd.vercel.app',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
 app.use(express.json());
 app.use('/images', express.static('images'));
 
