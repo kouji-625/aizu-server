@@ -22,6 +22,15 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// メール送信設定の確認
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('Nodemailer configuration error:', error);
+  } else {
+    console.log('Nodemailer is ready to send emails');
+  }
+});
+
 let db;
 async function connectToDB() {
   const uri = process.env.MONGODB_URI;
@@ -37,6 +46,7 @@ async function connectToDB() {
     process.exit(1);
   }
 }
+
 app.get('/api/rooms', async (req, res) => {
   try {
     const rooms = await db.collection('rooms').find().toArray();
@@ -48,10 +58,20 @@ app.get('/api/rooms', async (req, res) => {
 });
 
 connectToDB().then(() => {
+  // 環境変数をログに出力
+  console.log('Environment Variables:', {
+    PORT: process.env.PORT,
+    MONGODB_URI: process.env.MONGODB_URI,
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_PASS: process.env.EMAIL_PASS,
+    VITE_API_URL: process.env.VITE_API_URL,
+  });
+
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Aizu Inn Server!' });
   });
-    app.post(
+
+  app.post(
     '/api/reservations',
     [
       body('userId').optional().isString().withMessage('ユーザーIDは文字列で入力してください'),
@@ -120,7 +140,7 @@ connectToDB().then(() => {
         console.log('Sending email to:', email);
         try {
           const totalPrice = reservation.roomDetails.price * reservation.nights * reservation.guests;
-          await transporter.sendMail({
+          const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
             subject: 'ご予約ありがとうございます！',
@@ -148,7 +168,9 @@ connectToDB().then(() => {
 
               ご不明点があれば、いつでもご連絡ください。
             `,
-          });
+          };
+          console.log('Mail options:', mailOptions);
+          await transporter.sendMail(mailOptions);
           console.log('Email sent to:', email);
         } catch (emailErr) {
           console.error('Error sending email:', emailErr.message, emailErr.stack);
