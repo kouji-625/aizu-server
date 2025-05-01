@@ -11,10 +11,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://client-3ke0ngmxp-kouji-s-projects-352e3ffd.vercel.app'
-  ],
+  origin: 'https://client-3ke0ngmxp-kouji-s-projects-352e3ffd.vercel.app',
     methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 }));
