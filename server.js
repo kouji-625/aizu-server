@@ -11,11 +11,11 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // 動的なCORS設定
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
 console.log('Allowed Origins:', allowedOrigins);
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ['GET', 'POST', 'OPTIONS'], // OPTIONSを明示的に許可
+  origin: allowedOrigins, // 配列形式に戻す
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
 app.options('*', cors()); // OPTIONSリクエストに対応
@@ -23,6 +23,8 @@ app.options('*', cors()); // OPTIONSリクエストに対応
 app.use(express.json());
 app.use('/images', express.static('images'));
 
+// 以下、既存のコードは変更なし...
+// 以下、既存のコードは変更なし...
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
