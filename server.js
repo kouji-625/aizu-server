@@ -10,16 +10,15 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173', 'https://client-drab-iota.vercel.app'];
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://client-drab-iota.vercel.app',
-    'client-cyx0wmpey-kouji-s-projects-352e3ffd.vercel.app'
-  ],
-      methods: ['GET', 'POST'],
+  origin: allowedOrigins,
+  methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 }));
-
 
 app.use(express.json());
 app.use('/images', express.static('images'));
