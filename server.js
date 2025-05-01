@@ -13,11 +13,21 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://client-3ke0ngmxp-kouji-s-projects-352e3ffd.vercel.app'
+    'https://client-3ke0ngmxp-kouji-s-projects-352e3ffd.vercel.app',
+    'https://client-73f26qtev-kouji-s-projects-352e3ffd.vercel.app',
+     'https://client-bugwm4nk6-kouji-s-projects-352e3ffd.vercel.app'
   ],
       methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
 }));
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
+
 app.use(express.json());
 app.use('/images', express.static('images'));
 
