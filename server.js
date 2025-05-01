@@ -10,19 +10,12 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// 動的なCORS設定
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
-console.log('Allowed Origins:', allowedOrigins);
-app.use(cors({
-  origin: allowedOrigins, // 配列形式に戻す
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
-}));
+// 最小限のCORS設定
+app.use(cors()); // デフォルト設定（すべてのオリジンを許可）
 app.options('*', cors()); // OPTIONSリクエストに対応
 
 app.use(express.json());
 app.use('/images', express.static('images'));
-
 // 以下、既存のコードは変更なし...
 // 以下、既存のコードは変更なし...
 const transporter = nodemailer.createTransport({
@@ -215,5 +208,13 @@ connectToDB().then(() => {
 
   app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);
+  });
+  console.log('Environment Variables:', {
+    PORT: process.env.PORT,
+    MONGODB_URI: process.env.MONGODB_URI,
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_PASS: process.env.EMAIL_PASS,
+    VITE_API_URL: process.env.VITE_API_URL,
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   });
 });
