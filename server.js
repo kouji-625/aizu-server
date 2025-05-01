@@ -20,8 +20,27 @@ console.log('Environment Variables:', {
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
 });
 
-// CORS設定（シンプルに戻す）
-app.use(cors()); // すべてのオリジンを許可
+// 動的なCORS設定
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173', 'https://client-drab-iota.vercel.app']; // デフォルト値
+console.log('Allowed Origins:', allowedOrigins);
+app.use(cors({
+  origin: (origin, callback) => {
+    // デバッグ用ログ
+    console.log('Incoming Origin:', origin);
+    // サーバー間通信（originなし）または許可リストに含まれる場合に許可
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'], // 必要なメソッドを明示
+  allowedHeaders: ['Content-Type'], // 必要なヘッダーを明示
+  credentials: false, // 必要に応じてtrueに変更
+}));
 app.options('*', cors()); // OPTIONSリクエストに対応
 
 app.use(express.json());
@@ -61,136 +80,134 @@ async function connectToDB() {
   }
 }
 
-// ルート設定をデバッグ用に一時的にコメントアウト
-// app.get('/api/rooms', async (req, res) => {
-//   try {
-//     const rooms = await db.collection('rooms').find().toArray();
-//     res.json(rooms);
-//   } catch (err) {
-//     console.error('Error fetching rooms:', err);
-//     res.status(500).json({ error: 'Failed to fetch rooms' });
-//   }
-// });
+app.get('/api/rooms', async (req, res) => {
+  try {
+    const rooms = await db.collection('rooms').find().toArray();
+    res.json(rooms);
+  } catch (err) {
+    console.error('Error fetching rooms:', err);
+    res.status(500).json({ error: 'Failed to fetch rooms' });
+  }
+});
 
 connectToDB().then(() => {
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Aizu Inn Server!' });
   });
 
-  // デバッグ用に一時的にコメントアウト
-  // app.post(
-  //   '/api/reservations',
-  //   [
-  //     body('userId').optional().isString().withMessage('ユーザーIDは文字列で入力してください'),
-  //     body('name').isString().withMessage('名前は文字列で入力してください').trim().isLength({ min: 2, max: 50 }).withMessage('名前は2～50文字で入力してください').notEmpty().withMessage('名前は必須です'),
-  //     body('email').isEmail().withMessage('有効なメールアドレスを入力してください').notEmpty().withMessage('メールアドレスは必須です'),
-  //     body('postalCode').matches(/^\d{3}-\d{4}$/).withMessage('郵便番号は「123-4567」の形式で入力してください').notEmpty().withMessage('郵便番号は必須です'),
-  //     body('address').isString().withMessage('住所は文字列で入力してください').trim().isLength({ min: 5, max: 100 }).withMessage('住所は5～100文字で入力してください').notEmpty().withMessage('住所は必須です'),
-  //     body('phone').matches(/^\d{10,11}$/).withMessage('電話番号は10～11桁の数字で入力してください').notEmpty().withMessage('電話番号は必須です'),
-  //     body('roomType').isString().withMessage('部屋タイプは文字列で入力してください').notEmpty().withMessage('部屋タイプは必須です'),
-  //     body('checkIn').isISO8601().withMessage('チェックインは有効な日付（YYYY-MM-DD）を入力してください').notEmpty().withMessage('チェックインは必須です'),
-  //     body('checkOut').isISO8601().withMessage('チェックアウトは有効な日付（YYYY-MM-DD）を入力してください').notEmpty().withMessage('チェックアウトは必須です').custom((value, { req }) => {
-  //       const checkInDate = new Date(req.body.checkIn);
-  //       const checkOutDate = new Date(value);
-  //       if (checkOutDate <= checkInDate) {
-  //         throw new Error('チェックアウトはチェックインより後の日付にしてください');
-  //       }
-  //       return true;
-  //     }),
-  //     body('nights').isInt({ min: 1 }).withMessage('泊数は1以上の整数で入力してください').notEmpty().withMessage('泊数は必須です'),
-  //     body('guests').isInt({ min: 1 }).withMessage('人数は1以上の整数で入力してください').notEmpty().withMessage('人数は必須です'),
-  //     body('roomId').isMongoId().withMessage('部屋IDは有効なMongoDB ObjectId形式で入力してください').notEmpty().withMessage('部屋IDは必須です'),
-  //   ],
-  //   async (req, res) => {
-  //     console.log('Received POST /api/reservations:', JSON.stringify(req.body, null, 2));
-  //     const errors = validationResult(req);
-  //     if (!errors.isEmpty()) {
-  //       console.log('Validation errors:', errors.array());
-  //       return res.status(400).json({ errors: errors.array() });
-  //     }
+  app.post(
+    '/api/reservations',
+    [
+      body('userId').optional().isString().withMessage('ユーザーIDは文字列で入力してください'),
+      body('name').isString().withMessage('名前は文字列で入力してください').trim().isLength({ min: 2, max: 50 }).withMessage('名前は2～50文字で入力してください').notEmpty().withMessage('名前は必須です'),
+      body('email').isEmail().withMessage('有効なメールアドレスを入力してください').notEmpty().withMessage('メールアドレスは必須です'),
+      body('postalCode').matches(/^\d{3}-\d{4}$/).withMessage('郵便番号は「123-4567」の形式で入力してください').notEmpty().withMessage('郵便番号は必須です'),
+      body('address').isString().withMessage('住所は文字列で入力してください').trim().isLength({ min: 5, max: 100 }).withMessage('住所は5～100文字で入力してください').notEmpty().withMessage('住所は必須です'),
+      body('phone').matches(/^\d{10,11}$/).withMessage('電話番号は10～11桁の数字で入力してください').notEmpty().withMessage('電話番号は必須です'),
+      body('roomType').isString().withMessage('部屋タイプは文字列で入力してください').notEmpty().withMessage('部屋タイプは必須です'),
+      body('checkIn').isISO8601().withMessage('チェックインは有効な日付（YYYY-MM-DD）を入力してください').notEmpty().withMessage('チェックインは必須です'),
+      body('checkOut').isISO8601().withMessage('チェックアウトは有効な日付（YYYY-MM-DD）を入力してください').notEmpty().withMessage('チェックアウトは必須です').custom((value, { req }) => {
+        const checkInDate = new Date(req.body.checkIn);
+        const checkOutDate = new Date(value);
+        if (checkOutDate <= checkInDate) {
+          throw new Error('チェックアウトはチェックインより後の日付にしてください');
+        }
+        return true;
+      }),
+      body('nights').isInt({ min: 1 }).withMessage('泊数は1以上の整数で入力してください').notEmpty().withMessage('泊数は必須です'),
+      body('guests').isInt({ min: 1 }).withMessage('人数は1以上の整数で入力してください').notEmpty().withMessage('人数は必須です'),
+      body('roomId').isMongoId().withMessage('部屋IDは有効なMongoDB ObjectId形式で入力してください').notEmpty().withMessage('部屋IDは必須です'),
+    ],
+    async (req, res) => {
+      console.log('Received POST /api/reservations:', JSON.stringify(req.body, null, 2));
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        console.log('Validation errors:', errors.array());
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-  //     try {
-  //       const { userId, name, email, postalCode, address, phone, roomType, checkIn, checkOut, nights, guests, roomId } = req.body;
+      try {
+        const { userId, name, email, postalCode, address, phone, roomType, checkIn, checkOut, nights, guests, roomId } = req.body;
 
-  //       console.log('Checking roomId:', roomId);
-  //       const room = await db.collection('rooms').findOne({ _id: new ObjectId(roomId) });
-  //       if (!room) {
-  //         console.log('Room not found for roomId:', roomId);
-  //         return res.status(400).json({ errors: [{ msg: '指定された部屋IDは存在しません' }] });
-  //       }
+        console.log('Checking roomId:', roomId);
+        const room = await db.collection('rooms').findOne({ _id: new ObjectId(roomId) });
+        if (!room) {
+          console.log('Room not found for roomId:', roomId);
+          return res.status(400).json({ errors: [{ msg: '指定された部屋IDは存在しません' }] });
+        }
 
-  //       const reservation = {
-  //         userId: userId || 'guest',
-  //         name,
-  //         email,
-  //         postalCode,
-  //         address,
-  //         phone,
-  //         roomId: new ObjectId(roomId),
-  //         roomType,
-  //         checkIn: new Date(checkIn),
-  //         checkOut: new Date(checkOut),
-  //         nights,
-  //         guests,
-  //         status: 'confirmed',
-  //         createdAt: new Date(),
-  //         roomDetails: {
-  //           price: room.price,
-  //           image: room.image,
-  //           name: room.name,
-  //         },
-  //       };
+        const reservation = {
+          userId: userId || 'guest',
+          name,
+          email,
+          postalCode,
+          address,
+          phone,
+          roomId: new ObjectId(roomId),
+          roomType,
+          checkIn: new Date(checkIn),
+          checkOut: new Date(checkOut),
+          nights,
+          guests,
+          status: 'confirmed',
+          createdAt: new Date(),
+          roomDetails: {
+            price: room.price,
+            image: room.image,
+            name: room.name,
+          },
+        };
 
-  //       const result = await db.collection('reservations').insertOne(reservation);
-  //       const insertedReservation = { id: result.insertedId, ...reservation };
+        const result = await db.collection('reservations').insertOne(reservation);
+        const insertedReservation = { id: result.insertedId, ...reservation };
 
-  //       console.log('Sending email to:', email);
-  //       try {
-  //         const totalPrice = reservation.roomDetails.price * reservation.nights * reservation.guests;
-  //         const mailOptions = {
-  //           from: process.env.EMAIL_USER,
-  //           to: email,
-  //           subject: 'ご予約ありがとうございます！',
-  //           text: `
-  //             ${reservation.name} 様
+        console.log('Sending email to:', email);
+        try {
+          const totalPrice = reservation.roomDetails.price * reservation.nights * reservation.guests;
+          const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'ご予約ありがとうございます！',
+            text: `
+              ${reservation.name} 様
 
-  //             以下の内容でご予約を承りました。
+              以下の内容でご予約を承りました。
 
-  //             お客様情報:
-  //             - 名前: ${reservation.name}
-  //             - メール: ${reservation.email}
-  //             - 電話番号: ${reservation.phone}
-  //             - 住所: ${reservation.address}
-  //             - 郵便番号: ${reservation.postalCode}
+              お客様情報:
+              - 名前: ${reservation.name}
+              - メール: ${reservation.email}
+              - 電話番号: ${reservation.phone}
+              - 住所: ${reservation.address}
+              - 郵便番号: ${reservation.postalCode}
 
-  //             予約内容:
-  //             - 部屋タイプ: ${reservation.roomType}
-  //             - チェックイン: ${new Date(reservation.checkIn).toLocaleDateString('ja-JP')}
-  //             - チェックアウト: ${new Date(reservation.checkOut).toLocaleDateString('ja-JP')}
-  //             - 宿泊数: ${reservation.nights}泊
-  //             - 宿泊人数: ${reservation.guests}名
-  //             - 合計金額: ¥${totalPrice.toLocaleString()}
+              予約内容:
+              - 部屋タイプ: ${reservation.roomType}
+              - チェックイン: ${new Date(reservation.checkIn).toLocaleDateString('ja-JP')}
+              - チェックアウト: ${new Date(reservation.checkOut).toLocaleDateString('ja-JP')}
+              - 宿泊数: ${reservation.nights}泊
+              - 宿泊人数: ${reservation.guests}名
+              - 合計金額: ¥${totalPrice.toLocaleString()}
 
-  //             予約番号: ${result.insertedId}
+              予約番号: ${result.insertedId}
 
-  //             ご不明点があれば、いつでもご連絡ください。
-  //           `,
-  //         };
-  //         console.log('Mail options:', mailOptions);
-  //         await transporter.sendMail(mailOptions);
-  //         console.log('Email sent to:', email);
-  //       } catch (emailErr) {
-  //         console.error('Error sending email:', emailErr.message, emailErr.stack);
-  //       }
+              ご不明点があれば、いつでもご連絡ください。
+            `,
+          };
+          console.log('Mail options:', mailOptions);
+          await transporter.sendMail(mailOptions);
+          console.log('Email sent to:', email);
+        } catch (emailErr) {
+          console.error('Error sending email:', emailErr.message, emailErr.stack);
+        }
 
-  //       console.log('Reservation created:', insertedReservation);
-  //       res.status(201).json(insertedReservation);
-  //     } catch (err) {
-  //       console.error('Error creating reservation:', err);
-  //       res.status(500).json({ error: `Failed to create reservation: ${err.message}` });
-  //     }
-  //   }
-  // );
+        console.log('Reservation created:', insertedReservation);
+        res.status(201).json(insertedReservation);
+      } catch (err) {
+        console.error('Error creating reservation:', err);
+        res.status(500).json({ error: `Failed to create reservation: ${err.message}` });
+      }
+    }
+  );
 
   app.get('/api/reservations/:id', async (req, res) => {
     try {
