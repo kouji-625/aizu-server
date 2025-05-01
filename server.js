@@ -10,14 +10,43 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// 最小限のCORS設定
-app.use(cors()); // デフォルト設定（すべてのオリジンを許可）
+// 環境変数をログ出力（デバッグ用）
+console.log('Environment Variables:', {
+  PORT: process.env.PORT,
+  MONGODB_URI: process.env.MONGODB_URI,
+  EMAIL_USER: process.env.EMAIL_USER,
+  EMAIL_PASS: process.env.EMAIL_PASS,
+  VITE_API_URL: process.env.VITE_API_URL,
+  ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
+});
+
+// 動的なCORS設定
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173', 'https://client-drab-iota.vercel.app']; // デフォルト値
+console.log('Allowed Origins:', allowedOrigins);
+app.use(cors({
+  origin: (origin, callback) => {
+    // デバッグ用ログ
+    console.log('Incoming Origin:', origin);
+    // サーバー間通信（originなし）または許可リストに含まれる場合に許可
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked for origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'OPTIONS'], // 必要なメソッドを明示
+  allowedHeaders: ['Content-Type'], // 必要なヘッダーを明示
+  credentials: false, // 必要に応じてtrueに変更
+}));
 app.options('*', cors()); // OPTIONSリクエストに対応
 
 app.use(express.json());
 app.use('/images', express.static('images'));
-// 以下、既存のコードは変更なし...
-// 以下、既存のコードは変更なし...
+
+// メール送信設定
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
   auth: {
@@ -62,15 +91,6 @@ app.get('/api/rooms', async (req, res) => {
 });
 
 connectToDB().then(() => {
-  // 環境変数をログに出力
-  console.log('Environment Variables:', {
-    PORT: process.env.PORT,
-    MONGODB_URI: process.env.MONGODB_URI,
-    EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS,
-    VITE_API_URL: process.env.VITE_API_URL,
-  });
-
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Aizu Inn Server!' });
   });
@@ -208,13 +228,5 @@ connectToDB().then(() => {
 
   app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);
-  });
-  console.log('Environment Variables:', {
-    PORT: process.env.PORT,
-    MONGODB_URI: process.env.MONGODB_URI,
-    EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS,
-    VITE_API_URL: process.env.VITE_API_URL,
-    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
   });
 });
