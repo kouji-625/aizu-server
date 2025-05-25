@@ -2,7 +2,7 @@
 
 The backend of a full-stack web application to promote tourism in Aizu, Japan. Built with Node.js, Express, and MongoDB Atlas, deployed on Render. Provides REST API for the frontend (`aizu-client`).
 
-** 会津の観光振興を支えるREST API。予約システムとメール通知を提供。
+会津の観光振興を支えるREST API。予約システムとメール通知を提供。
 
 ## 🚀 Features
 - REST API for rooms and reservations (`GET /api/rooms`, `POST /api/reservations`).
